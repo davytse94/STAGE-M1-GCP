@@ -41,8 +41,11 @@ Réception des messages du Topic à l’aide du Subscriber (lancer le script sub
 
 Apache Kafka dans une VM
 Transfert de fichier depuis la machine local à la VM de GCP.
+
 gcloud compute scp data.csv user@<nom de l’instance>::~/
+
 gcloud compute scp consumer.py user@<nom de l’instance>::~/
+
 gcloud compute scp producer.py user@<nom de l’instance>::~/
 
 Se connecter en ssh à la VM de GCP. 
