@@ -1,0 +1,14 @@
+---
+- name: Install Google Cloud Ops Agent on all servers
+  hosts: ops_agents
+  become: yes
+  tasks:
+    - name: Download the Google Cloud Ops Agent script
+      shell: curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+      args:
+        chdir: /tmp
+
+    - name: Execute the Google Cloud Ops Agent script
+      shell: sudo bash /tmp/add-google-cloud-ops-agent-repo.sh --also-install
+      args:
+        chdir: /tmp

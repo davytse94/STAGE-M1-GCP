@@ -1,0 +1,105 @@
+---
+- name: Installer et configurer Apache Kafka
+  hosts: kafka_servers
+  become: yes
+  vars:
+    kafka_version: 3.7.1
+    scala_version: 2.13
+    kafka_dir: /opt/kafka
+    kafka_data_dir: /var/lib/kafka
+    zookeeper_data_dir: /var/lib/zookeeper
+
+  tasks:
+    - name: Installer Java
+      apt:
+        name: openjdk-11-jre-headless
+        state: present
+        update_cache: yes
+
+    - name: Créer le groupe Kafka
+      group:
+        name: kafka
+        state: present
+
+    - name: Créer l'utilisateur Kafka
+      user:
+        name: kafka
+        group: kafka
+        system: yes
+        shell: /sbin/nologin
+
+    - name: Télécharger Apache Kafka
+      get_url:
+        url: "https://downloads.apache.org/kafka/{{ kafka_version }}/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+        dest: "/tmp/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+        mode: '0644'
+
+    - name: Créer le répertoire Kafka
+      file:
+        path: "{{ kafka_dir }}"
+        state: directory
+        owner: kafka
+        group: kafka
+        mode: '0755'
+
+    - name: Extraire l'archive Kafka
+      unarchive:
+        src: "/tmp/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+        dest: "{{ kafka_dir }}"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+        owner: kafka
+        group: kafka
+
+    - name: Créer les répertoires de données
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: kafka
+        group: kafka
+        mode: '0755'
+      loop:
+        - "{{ kafka_data_dir }}"
+        - "{{ zookeeper_data_dir }}"
+
+    - name: Configurer Kafka
+      template:
+        src: server.properties.j2
+        dest: "{{ kafka_dir }}/config/server.properties"
+        owner: kafka
+        group: kafka
+        mode: '0644'
+
+    - name: Configurer Zookeeper
+      template:
+        src: zookeeper.properties.j2
+        dest: "{{ kafka_dir }}/config/zookeeper.properties"
+        owner: kafka
+        group: kafka
+        mode: '0644'
+
+    - name: Créer le service systemd pour Zookeeper
+      template:
+        src: zookeeper.service.j2
+        dest: /etc/systemd/system/zookeeper.service
+        mode: '0644'
+
+    - name: Créer le service systemd pour Kafka
+      template:
+        src: kafka.service.j2
+        dest: /etc/systemd/system/kafka.service
+        mode: '0644'
+
+    - name: Démarrer et activer Zookeeper
+      systemd:
+        name: zookeeper
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Démarrer et activer Kafka
+      systemd:
+        name: kafka
+        state: started
+        enabled: yes
+        daemon_reload: yes
