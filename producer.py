@@ -3,11 +3,13 @@ import json
 import time
 from kafka import KafkaProducer
 
-
 def serializer(message):
     return json.dumps(message).encode('utf-8')
 
 def inject_to_kafka(producer, df, topic, divide, amplifier):
+    # Capturer le temps de début
+    start_time = time.time()
+    
     sorted_df = df.sort_values(by='modified_timestamp')
     i = 0
 
@@ -39,6 +41,14 @@ def inject_to_kafka(producer, df, topic, divide, amplifier):
     print(json.dumps(end_of_transmission_message, ensure_ascii=False))
 
     producer.flush()
+    
+    # Capturer le temps de fin
+    end_time = time.time()
+    
+    # Calculer et afficher le temps écoulé
+    elapsed_time = end_time - start_time
+    print(f"Temps total écoulé: {elapsed_time:.2f} secondes")
+    
     return producer
 
 if __name__ == "__main__":
